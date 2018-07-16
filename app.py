@@ -1,13 +1,8 @@
 from flask import Flask, request, render_template
+
 import cgi, time, datetime, requests
 
 app = Flask(__name__)
-
-def send(data):
-    url = "https://rockblock.rock7.com/rockblock/MT"
-    querystring = {"imei":"300234066638420","username":"aubrey@jaliko.com","password":"mak3rspac3","data":data}
-    response = requests.request("POST", url, params=querystring)
-    print(response.text)
 
 def hex_to_float(hex):
     little_endian = str(hex[6:] + hex[4:6] + hex[2:4] + hex[0:2])
@@ -32,6 +27,7 @@ def hex_to_float(hex):
     return(sign * exponent * sum)
 
 a = [None]
+
 
 class crc8:
     def __init__(self):
@@ -60,18 +56,6 @@ class crc8:
             z = runningCRC ^ c
             runningCRC = self.crcTable[z]
         return hex(runningCRC)[2:]
-
-class Empty(object):
-
-    def __init__(self):
-        self.TimeStamp = None
-        self.MsgID = None
-        self.MsgType = None
-        self.GPSQuality = None
-        self.GPSLatitude = None
-        self.GPSLongitude = None
-        self.UnstructLen = 0
-        self.Unstructured = None
 
 class ParseFromHex(object):
 
@@ -142,6 +126,9 @@ class ParseToHex(object):
         self.crc = crc_8.crc(msg)
         self.Msg = crc_input + self.crc
 
+initial = ParseToHex(1, "")
+send = [initial.Msg]
+
 @app.route('/', methods=["GET"])
 def index():
     global a
@@ -154,24 +141,37 @@ def index():
 
 @app.route("/", methods=["POST"])
 def get_data():
-    global a
-    data = request.get_data()
-    data = str(data).split("=")
-    if data[-1][24:40] == "4142424141424241" and data[-1][40:58] != "000000000000000000":
-        a.append(data[-1][:-1])
-        return "ok"
-    else:
-        return index()
+        global a
+        global send
+        data = request.get_data()
+        data = str(data).split("=")
+        if data[-1][24:40] == "4142424141424241" and data[-1][40:58] != "000000000000000000":
+            a.append(data[-1][:-1])
+            return "ok"
+        else:
+            url = "https://rockblock.rock7.com/rockblock/MT"
+            querystring = {"imei":"300234066638420","username":"aubrey@jaliko.com","password":"mak3rspac3","data":send[-1]}
+            response = requests.request("POST", url, params=querystring)
+            print(response.text)
+            return index()
 
-@app.route("/", methods=["GET", "POST"])
+#app.route('/send')
+#def send():
+#    return render_template('send.html')
+
+@app.route('/', methods=["POST"])
 def submit():
+    global send
     global a
     MsgType = request.form['msgtype']
     payload = request.form['payload']
     if payload == "":
         payload = None
-    data = ParseToHex(msgType, payload)
-    send(data.Msg)
+    send.append(ParseToHex(MsgType, payload).Msg)
+    url = "https://rockblock.rock7.com/rockblock/MT"
+    querystring = {"imei":"300234066638420","username":"aubrey@jaliko.com","password":"mak3rspac3","data":send[-1]}
+    response = requests.request("POST", url, params=querystring)
+    print(response.text)
     return index()
 
 app.secret_key = "secret"
