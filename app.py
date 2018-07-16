@@ -131,7 +131,7 @@ class ParseToHex(object):
         minute = hex(int(TimeStamp[10:12]))[2:].rjust(2, "0")
         second = hex(int(TimeStamp[12:]))[2:].rjust(2, "0")
         self.TimeStamp = year + month + day + hour + minute + second
-        self.msglen = len(self.MsgType) + len(self.MsgID) + len(self.UnstructLen) + self.UnstructLen + len(self.MsgID) + len(self.TimeStamp) + 2
+        self.msglen = len(self.MsgType) + len(self.MsgID) + len(self.UnstructLen) + self.UnstructLen + len(self.MsgID) + len(self.TimeStamp) + len(self.devReg) + len(self.GPSpos) + len(self.GPSqual)+ 2
         crc_8 = crc8()
         if self.Unstructured == None:
             crc_input = self.msglen + self.MsgID  + self.TimeStamp + self.MsgType + self.devReg  + self.GPSpos + self.GPSqual + self.UnstructLen
@@ -157,7 +157,7 @@ def get_data():
     global a
     data = request.get_data()
     data = str(data).split("=")
-    if data[-1][56:58] != "00":
+    if data[-1][24:40] == "4142424141424241" and data[-1][40:58] != "000000000000000000":
         a.append(data[-1][:-1])
         return "ok"
     else:
