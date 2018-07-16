@@ -134,16 +134,19 @@ class ParseToHex(object):
         self.crc = crc_8.crc(msg)
         self.Msg = crc_input + self.crc
 
-@app.route('/', methods=["GET", "POST"])
+@app.route('/')
 def index():
     try:
-        check_data()
         global a
         data = ParseFromHex(a[-1])
         return render_template("index.html", show=True, test=data.crc_test, raw_data=a[-1], data=data)
     except:
         return render_template("index.html", show=True, test=False)
-
+    
+@app.route("/", methods=["POST"])
+def get_data():
+        check_data()
+    
 @app.route("/", methods=["GET", "POST"])
 def submit():
     MsgType = request.form['msgtype']
