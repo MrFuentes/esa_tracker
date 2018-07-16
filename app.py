@@ -1,6 +1,5 @@
-from flask import Flask, request, render_template, flash
-import cgi, time, datetime
-import requests
+from flask import Flask, request, render_template
+import cgi, time, datetime, requests
 
 def send(data):
     url = "https://rockblock.rock7.com/rockblock/MT"
@@ -160,12 +159,14 @@ def get_data():
     else:
         return index()
 
-@app.route("/", methods=["GET", "POST"])
+@app.route("/", methods=["POST"])
 def submit():
     MsgType = request.form['msgtype']
     payload = request.form['payload']
+    if payload == "":
+        payload = None
     data = ParseToHex(msgType, payload)
-    return send(data.Msg)
+    return send(data)
 
 app.secret_key = "secret"
 
