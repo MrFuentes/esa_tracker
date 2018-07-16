@@ -112,6 +112,9 @@ class ParseToHex(object):
 
     def __init__(self, msgtype, Unstructured=None):
         self.MsgType = msgtype
+        self.devReg = "4142424141424241"
+        self.GPSpos = "0000000000000000"
+        self.GPSqual = "00"
         if Unstructured != None:
             Unstructured = Unstructured.encode("utf-8")
             self.Unstructured = Unstructured.hex()
@@ -131,9 +134,9 @@ class ParseToHex(object):
         self.msglen = len(self.MsgType) + len(self.MsgID) + len(self.UnstructLen) + self.UnstructLen + len(self.MsgID) + len(self.TimeStamp) + 2
         crc_8 = crc8()
         if self.Unstructured == None:
-            crc_input = self.msglen + self.MsgID  + self.TimeStamp + self.MsgType + self.UnstructLen
+            crc_input = self.msglen + self.MsgID  + self.TimeStamp + self.MsgType + self.devReg  + self.GPSpos + self.GPSqual + self.UnstructLen
         else:
-            crc_input = self.msglen + self.MsgID  + self.TimeStamp + self.MsgType + self.UnstructLen + self.Unstructured
+            crc_input = self.msglen + self.MsgID  + self.TimeStamp + self.MsgType + self.devReg  + self.GPSpos + self.GPSqual + self.UnstructLen + self.Unstructured
         n = 2
         msg = [crc_input[i:i+n] for i in range(0, len(crc_input), n)]
         self.crc = crc_8.crc(msg)
@@ -154,7 +157,7 @@ def get_data():
     global a
     data = request.get_data()
     data = str(data).split("=")
-    if data[-1][24:40] == "4142424141424241":
+    if data[-1][56:58] != "00":
         a.append(data[-1][:-1])
         return "ok"
     else:
@@ -167,7 +170,8 @@ def submit():
     if payload == "":
         payload = None
     data = ParseToHex(msgType, payload)
-    return send(data)
+    send(data.Msg)
+    return index()
 
 app.secret_key = "secret"
 
