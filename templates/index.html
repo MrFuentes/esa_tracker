@@ -4,6 +4,7 @@
   <title>
     SatTracker
   </title>
+  <meta http-equiv="refresh" content="5" >
 </head>
 
 <style type="text/css">
@@ -55,8 +56,8 @@ body {
     <h2>
       Recieve
     </h2>
-    {% if show %}
-      {% if test %}
+    {% if raw_data != None %}
+      {% if test == 0 %}
         <div id="Data">
           <p>
             Payload: {{ raw_data }}

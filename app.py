@@ -9,7 +9,7 @@ def hex_to_float(hex):
     little_endian = str(hex[6:] + hex[4:6] + hex[2:4] + hex[0:2])
     binary = [bin(int(x, 16))[2:].zfill(4) for x in little_endian]
     binary_str = ''.join(binary)
-    sign = binary_str[0]
+    sign_bit = binary_str[0]
     exponent = 2 ** (int(binary_str[1:9], 2) - 127)
     mantissa = binary_str[9:]
     i = -1
@@ -21,10 +21,11 @@ def hex_to_float(hex):
     sum = 1
     for x in pos:
         sum += 2 ** x
-    if sign == 1:
-        return(-1 * exponent * sum)
+    if sign_bit == "1":
+        sign = -1
     else:
-        return(exponent * sum)
+        sign = 1
+    return(sign * exponent * sum)
 
 a = [None]
 
@@ -50,24 +51,23 @@ class crc8:
 
     def crc(self, msg):
         runningCRC = 0x42
-        for c in data:
+        for c in msg:
             c = int(c, 16)
             z = runningCRC ^ c
             runningCRC = self.crcTable[z]
         return hex(runningCRC)[2:]
 
-def check_data():
-    global a
-    imei = request.form["imei"]
-    momsn = request.form["momsn"]
-    transmit_time = request.form["transmit_time"]
-    iridium_latitude = request.form["iridium_latitude"]
-    iridium_longitude = request.form["iridium_longitude"]
-    iridium_cep = request.form["iridium_cep"]
-    data = request.form["data"]
-    a.append(data)
-    print("ok")
-    return data
+class Empty(object):
+
+    def __init__(self):
+        self.TimeStamp = None
+        self.MsgID = None
+        self.MsgType = None
+        self.GPSQuality = None
+        self.GPSLatitude = None
+        self.GPSLongitude = None
+        self.UnstructLen = 0
+        self.Unstructured = None
 
 class ParseFromHex(object):
 
@@ -96,6 +96,7 @@ class ParseFromHex(object):
             self.Unstructured = None
         crc_8 = crc8()
         crc_input = data
+        n = 2
         msg = [crc_input[i:i+n] for i in range(0, len(crc_input), n)]
         self.crc = crc_8.crc(msg)
         if self.crc == 0:
@@ -134,19 +135,24 @@ class ParseToHex(object):
         self.crc = crc_8.crc(msg)
         self.Msg = crc_input + self.crc
 
-@app.route('/')
+@app.route('/', methods=["GET"])
 def index():
-    try:
-        global a
+    global a
+    if a[-1] != None:
         data = ParseFromHex(a[-1])
-        return render_template("index.html", show=True, test=data.crc_test, raw_data=a[-1], data=data)
-    except:
-        return render_template("index.html", show=True, test=False)
-    
+        return render_template("index.html", test=data.crc_test, raw_data=a[-1], data=data)
+    else:
+        data = None
+        return render_template("index.html", raw_data=a[-1])
+
 @app.route("/", methods=["POST"])
 def get_data():
-        check_data()
-    
+    global a
+    data = request.get_data()
+    data = str(data).split("=")
+    a.append(data[-1][:-1])
+    return "ok"
+
 @app.route("/", methods=["GET", "POST"])
 def submit():
     MsgType = request.form['msgtype']
@@ -157,4 +163,4 @@ def submit():
 app.secret_key = "secret"
 
 if __name__ == "__main__":
-    app.run()
+    app.run(host='0.0.0.0')
