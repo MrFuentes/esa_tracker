@@ -1,12 +1,6 @@
 from flask import Flask, request, render_template
 import cgi, time, datetime, requests
 
-def send(data):
-    url = "https://rockblock.rock7.com/rockblock/MT"
-    querystring = {"imei":"300234066638420","username":"aubrey@jaliko.com","password":"mak3rspac3","data":data}
-    response = requests.request("POST", url, params=querystring)
-    print(response.text)
-
 app = Flask(__name__)
 
 def hex_to_float(hex):
@@ -163,14 +157,14 @@ def get_data():
     else:
         return index()
 
-@app.route("/", methods=["POST"])
+@app.route("/")
 def submit():
     MsgType = request.form['msgtype']
     payload = request.form['payload']
     if payload == "":
         payload = None
     data = ParseToHex(msgType, payload)
-    send(data.Msg)
+    execfile('send.py', data.Msg)
     return index()
 
 app.secret_key = "secret"
