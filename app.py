@@ -1,7 +1,11 @@
 from flask import Flask, request, render_template, flash
 import cgi, time, datetime
-#todo:
-#get server running
+import requests
+
+def send(data):
+    url = "https://rockblock.rock7.com/rockblock/MT"
+    querystring = {"imei":"300234066638420","username":"aubrey@jaliko.com","password":"mak3rspac3","data":data}
+    response = requests.request("POST", url, params=querystring)
 
 app = Flask(__name__)
 
@@ -161,7 +165,7 @@ def submit():
     MsgType = request.form['msgtype']
     payload = request.form['payload']
     data = ParseToHex(msgType, payload)
-    return index()
+    return send(data.Msg)
 
 app.secret_key = "secret"
 
