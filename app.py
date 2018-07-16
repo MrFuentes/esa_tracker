@@ -142,7 +142,7 @@ def index():
         data = ParseFromHex(a[-1])
         return render_template("index.html", show=True, test=data.crc_test, raw_data=a[-1], data=data)
     except:
-        return render_template("index.html", show=False)
+        return render_template("index.html", show=True, test=False)
 
 @app.route("/", methods=["GET", "POST"])
 def submit():
