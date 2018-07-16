@@ -150,15 +150,18 @@ def get_data():
     global a
     data = request.get_data()
     data = str(data).split("=")
-    a.append(data[-1][:-1])
-    return "ok"
+    if data[-1][24:40] == "4142424141424241":
+        a.append(data[-1][:-1])
+        return "ok"
+    else:
+        return index()
 
 @app.route("/", methods=["GET", "POST"])
 def submit():
     MsgType = request.form['msgtype']
     payload = request.form['payload']
     data = ParseToHex(msgType, payload)
-    return render_template("index.html", data=data)
+    return index()
 
 app.secret_key = "secret"
 
