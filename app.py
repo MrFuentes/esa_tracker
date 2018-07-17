@@ -132,6 +132,8 @@ send = [initial.Msg]
 @app.route('/', methods=["GET"])
 def index():
     global a
+    global send
+    send = [ParseToHex(1, "").Msg]
     if a[-1] != None:
         data = ParseFromHex(a[-1])
         return render_template("index.html", test=data.crc_test, raw_data=a[-1], data=data)
