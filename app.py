@@ -102,10 +102,10 @@ class ParseToHex(object):
         if Unstructured != "":
             Unstructured = Unstructured.encode("utf-8")
             self.Unstructured = Unstructured.hex()
-            self.UnstructLen = str(len(self.Unstructured))
+            self.UnstructLen = hex(len(self.Unstructured))[2:]
         else:
             self.Unstructured= None
-            self.UnstructLen = "0"
+            self.UnstructLen = "00"
         self.MsgID = "000000"
         TimeStamp = str(datetime.datetime.fromtimestamp(time.time()).strftime('%Y%m%d%H%M%S'))
         year = hex(int(TimeStamp[2:4]))[2:].rjust(2, "0")
