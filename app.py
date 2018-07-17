@@ -143,6 +143,7 @@ def index():
 def get_data():
         global a
         global send
+        send = [ParseToHex(1, "")]
         data = request.get_data()
         data = str(data).split("=")
         if data[-1][24:40] == "4142424141424241" and data[-1][40:58] != "000000000000000000":
@@ -153,7 +154,7 @@ def get_data():
             querystring = {"imei":"300234066638420","username":"aubrey@jaliko.com","password":"mak3rspac3","data":send[-1]}
             response = requests.request("POST", url, params=querystring)
             print(response.text)
-            return index()
+            return return '''please refresh and resend twice then click <a href=http://esa-tracker.herokuapp.com/>here</a>'''
 
 #app.route('/send')
 #def send():
