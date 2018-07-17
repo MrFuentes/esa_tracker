@@ -171,6 +171,7 @@ def submit():
     url = "https://rockblock.rock7.com/rockblock/MT"
     querystring = {"imei":"300234066638420","username":"aubrey@jaliko.com","password":"mak3rspac3","data":send[-1]}
     response = requests.request("POST", url, params=querystring)
+    send = [ParseToHex(1,request.form['payload']).Msg]
     print(response.text)
     return index()
 
