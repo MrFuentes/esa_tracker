@@ -95,7 +95,7 @@ class ParseFromHex(object):
 class ParseToHex(object):
 
     def __init__(self, msgtype, Unstructured=None):
-        self.MsgType = "0" + str(msgtype)
+        self.MsgType = msgtype
         self.devReg = "4142424141424241"
         self.GPSpos = "0000000000000000"
         self.GPSqual = "00"
@@ -118,9 +118,9 @@ class ParseToHex(object):
         self.msglen = hex((len(str(self.MsgType)) + len(str(self.MsgID)) + len(str(self.UnstructLen)) + int(self.UnstructLen) + len(str(self.MsgID)) + len(str(self.TimeStamp)) + len(str(self.devReg)) + len(str(self.GPSpos)) + len(str(self.GPSqual))+ 2)//2)[2:].rjust(4, "0")
         crc_8 = crc8()
         if self.Unstructured == None:
-            crc_input = str(self.msglen) + str(self.MsgID)  + str(self.TimeStamp) + str(self.MsgType) + str(self.devReg) + str(self.GPSpos) + str(self.GPSqual) + str(self.UnstructLen)
+            crc_input = str(self.msglen) + str(self.MsgID)  + str(self.TimeStamp) + "0" + str(self.MsgType) + str(self.devReg) + str(self.GPSpos) + str(self.GPSqual) + str(self.UnstructLen)
         else:
-            crc_input = str(self.msglen) + str(self.MsgID)  + str(self.TimeStamp) + str(self.MsgType) + str(self.devReg)  + str(self.GPSpos) + str(self.GPSqual) + str(self.UnstructLen) + str(self.Unstructured)
+            crc_input = str(self.msglen) + str(self.MsgID)  + str(self.TimeStamp) + "0" + str(self.MsgType) + str(self.devReg)  + str(self.GPSpos) + str(self.GPSqual) + str(self.UnstructLen) + str(self.Unstructured)
         n = 2
         msg = [crc_input[i:i+n] for i in range(0, len(crc_input), n)]
         self.crc = crc_8.crc(msg)
