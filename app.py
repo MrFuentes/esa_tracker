@@ -95,7 +95,7 @@ class ParseFromHex(object):
 class ParseToHex(object):
 
     def __init__(self, msgtype, Unstructured=None):
-        self.MsgType = "0" + msgtype
+        self.MsgType = "0" + str(msgtype)
         self.devReg = "4142424141424241"
         self.GPSpos = "0000000000000000"
         self.GPSqual = "00"
