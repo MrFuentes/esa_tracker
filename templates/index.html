@@ -46,7 +46,7 @@ body {
 }
 #button {
   height: 45px;
-  width: 100%;
+  width: 104%;
 }
 </style>
 
@@ -94,7 +94,7 @@ body {
       </p>
     {% endif %}
   </div>
-  <div id="Send" aling="center">
+ <div id="Send" aling="center">
     <div id="transmit">
       <h2>
         Transmit
@@ -105,9 +105,9 @@ body {
         Message Type:
       </p>
       <div id="checks">
-        <form action="{{ url_for('submit')  }}" method="post">
-          <input type="radio" name="msgtype" value="1" checked="checked">Request Location<br>
-          <input type="radio" name="msgtype" value="3">Acknowledge<br><br>
+        <form action="{{ url_for('get_data')  }}" method="post">
+          <input type="radio" name="msgtype" value="01" checked="checked">Request Location<br>
+          <input type="radio" name="msgtype" value="03">Acknowledge<br><br>
         </form>
       </div>
     </div>
@@ -116,9 +116,9 @@ body {
         Payload text entry:
       </p>
       <div id="TextEntry">
-        <form action="{{ url_for('submit') }}" method="post">
+        <form action="{{ url_for('get_data') }}" method="post">
           <textarea id="payload" name="payload" rows="10" cols="80"></textarea><br>
-          <input id="button" type="submit" value="send" >
+          <input id="button" name="button" type="submit" value="send" >
         </form>
       </div>
     </div>
