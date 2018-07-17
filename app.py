@@ -95,14 +95,14 @@ class ParseFromHex(object):
 class ParseToHex(object):
 
     def __init__(self, msgtype, Unstructured=None):
-        self.MsgType = hex(msgtype)[2:]
+        self.MsgType = "0" + msgtype
         self.devReg = "4142424141424241"
         self.GPSpos = "0000000000000000"
         self.GPSqual = "00"
         if Unstructured != "":
             Unstructured = Unstructured.encode("utf-8")
             self.Unstructured = Unstructured.hex()
-            self.UnstructLen = hex(len(self.Unstructured))[2:]
+            self.UnstructLen = hex(len(self.Unstructured))[2:].rjust(2, "0")
         else:
             self.Unstructured= None
             self.UnstructLen = "00"
