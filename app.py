@@ -156,7 +156,7 @@ def get_data():
             querystring = {"imei":"300234066638420","username":"aubrey@jaliko.com","password":"mak3rspac3","data":send[-1]}
             response = requests.request("POST", url, params=querystring)
             print(response.text)
-            return return '''please refresh and resend twice then click <a href=http://esa-tracker.herokuapp.com/>here</a>'''
+            return return '''<h2>sending</h2><br>please refresh and resend twice then click <a href=http://esa-tracker.herokuapp.com/>here</a>'''
 
 #app.route('/send')
 #def send():
