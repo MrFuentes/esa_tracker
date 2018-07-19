@@ -1,18 +1,28 @@
 from flask import Flask, request, render_template
-
 import cgi, time, datetime, requests
 
 app = Flask(__name__)
 
+#converts hex data into floating point number
 def hex_to_float(hex):
+    #re-organises data to have little endian first
     little_endian = str(hex[6:] + hex[4:6] + hex[2:4] + hex[0:2])
+    #converts the hex to a binary string
     binary = [bin(int(x, 16))[2:].zfill(4) for x in little_endian]
     binary_str = ''.join(binary)
+    #first bit of the string dictates the sign of the floating point number
     sign_bit = binary_str[0]
+    if sign_bit == "1":
+        sign = -1
+    else:
+        sign = 1
+    #the next 8 bits are the mantissa
     exponent = 2 ** (int(binary_str[1:9], 2) - 127)
+    #the remaining bits are the mantissa
     mantissa = binary_str[9:]
     i = -1
     pos = []
+    #converts the mantissa from a binary float to a decimal float
     for x in mantissa:
         if x == "1":
             pos.append(i)
@@ -20,15 +30,10 @@ def hex_to_float(hex):
     sum = 1
     for x in pos:
         sum += 2 ** x
-    if sign_bit == "1":
-        sign = -1
-    else:
-        sign = 1
+    #returns converted floating point number
     return(sign * exponent * sum)
 
-a = [None]
-
-
+#checks and generates crc on send and recieved data
 class crc8:
     def __init__(self):
         self.crcTable = ( 0x00, 0x07, 0x0E, 0x09, 0x1C, 0x1B, 0x12, 0x15, 0x38, 0x3F, 0x36, 0x31, 0x24,
@@ -57,6 +62,7 @@ class crc8:
             runningCRC = self.crcTable[z]
         return hex(runningCRC)[2:]
 
+#Parses recieved data into readable form
 class ParseFromHex(object):
 
     def __init__(self, data):
@@ -92,20 +98,21 @@ class ParseFromHex(object):
         else:
             self.crc_test = False
 
+#generates data and and converts it to hex to be send to the rockblock servers
 class ParseToHex(object):
 
     def __init__(self, msgtype, Unstructured=None):
-        self.MsgType = msgtype
+        self.MsgType = "0" + str(msgtype)
         self.devReg = "4142424141424241"
         self.GPSpos = "0000000000000000"
         self.GPSqual = "00"
         if Unstructured != "":
             Unstructured = Unstructured.encode("utf-8")
             self.Unstructured = Unstructured.hex()
-            self.UnstructLen = hex(len(self.Unstructured))[2:].rjust(2, "0")
+            self.UnstructLen = str(len(self.Unstructured))
         else:
             self.Unstructured= None
-            self.UnstructLen = "00"
+            self.UnstructLen = "0"
         self.MsgID = "000000"
         TimeStamp = str(datetime.datetime.fromtimestamp(time.time()).strftime('%Y%m%d%H%M%S'))
         year = hex(int(TimeStamp[2:4]))[2:].rjust(2, "0")
@@ -118,9 +125,9 @@ class ParseToHex(object):
         self.msglen = hex((len(str(self.MsgType)) + len(str(self.MsgID)) + len(str(self.UnstructLen)) + int(self.UnstructLen) + len(str(self.MsgID)) + len(str(self.TimeStamp)) + len(str(self.devReg)) + len(str(self.GPSpos)) + len(str(self.GPSqual))+ 2)//2)[2:].rjust(4, "0")
         crc_8 = crc8()
         if self.Unstructured == None:
-            crc_input = str(self.msglen) + str(self.MsgID)  + str(self.TimeStamp) + "0" + str(self.MsgType) + str(self.devReg) + str(self.GPSpos) + str(self.GPSqual) + str(self.UnstructLen)
+            crc_input = str(self.msglen) + str(self.MsgID)  + str(self.TimeStamp) + str(self.MsgType) + str(self.devReg) + str(self.GPSpos) + str(self.GPSqual) + str(self.UnstructLen)
         else:
-            crc_input = str(self.msglen) + str(self.MsgID)  + str(self.TimeStamp) + "0" + str(self.MsgType) + str(self.devReg)  + str(self.GPSpos) + str(self.GPSqual) + str(self.UnstructLen) + str(self.Unstructured)
+            crc_input = str(self.msglen) + str(self.MsgID)  + str(self.TimeStamp) + str(self.MsgType) + str(self.devReg)  + str(self.GPSpos) + str(self.GPSqual) + str(self.UnstructLen) + str(self.Unstructured)
         n = 2
         msg = [crc_input[i:i+n] for i in range(0, len(crc_input), n)]
         self.crc = crc_8.crc(msg)
@@ -128,7 +135,9 @@ class ParseToHex(object):
 
 initial = ParseToHex(1, "")
 send = [initial.Msg]
+a = [None]
 
+#generates and displays the main page
 @app.route('/', methods=["GET"])
 def index():
     global a
@@ -141,46 +150,25 @@ def index():
         data = None
         return render_template("index.html", raw_data=a[-1])
 
+#sends or displays post data
 @app.route("/", methods=["POST"])
 def get_data():
         global a
         global send
-        send = [ParseToHex(1, "")]
         data = request.get_data()
         data = str(data).split("=")
         if data[-1][24:40] == "4142424141424241" and data[-1][40:58] != "000000000000000000":
             a.append(data[-1][:-1])
             return "ok"
         else:
+            global send
             url = "https://rockblock.rock7.com/rockblock/MT"
             querystring = {"imei":"300234066638420","username":"aubrey@jaliko.com","password":"mak3rspac3","data":send[-1]}
             response = requests.request("POST", url, params=querystring)
             print(response.text)
-            return '''<h2>sending</h2><br>please refresh and resend twice then click <a href=http://esa-tracker.herokuapp.com/>here</a>'''
-
-#app.route('/send')
-#def send():
-#    return render_template('send.html')
-
-@app.route('/', methods=["POST"])
-def submit():
-    global send
-    global a
-    MsgType = request.form['msgtype']
-    payload = request.form['payload']
-    if payload == "":
-        payload = None
-    send.append(ParseToHex(MsgType, payload).Msg)
-    url = "https://rockblock.rock7.com/rockblock/MT"
-    querystring = {"imei":"300234066638420","username":"aubrey@jaliko.com","password":"mak3rspac3","data":send[-1]}
-    response = requests.request("POST", url, params=querystring)
-    response = requests.request("POST", url, params=querystring)
-    response = requests.request("POST", url, params=querystring)
-    send = [ParseToHex(1,request.form['payload']).Msg]
-    print(response.text)
-    return index()
+            return '''<h1>sending</h1><br><br>please refresh and resend twice then click <a href=http://esa-tracker.herokuapp.com/>here</a>'''
 
 app.secret_key = "secret"
 
 if __name__ == "__main__":
-    app.run(host='0.0.0.0')
+    app.run(host='0.0.0.0', debug=True)
