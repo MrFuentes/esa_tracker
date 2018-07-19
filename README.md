@@ -51,12 +51,12 @@ Generates data, containing unused filler data to get the string to be at least 3
 #### Returns:
   Hex string to be sent to module
   
-index(*function*)
+Index(*function*)
 -----------------
 
   Generates the main page of the site, and displays the recieved data if there is any.  It also creates a new message to send to the module
 
-get_data(*function*)
+GetData(*function*)
 --------------------
 
   Checks where the post request is aimed towards, as indicated by the filler data, and either displays it, or sends it to the rockblock       servers to be sent to the module
