@@ -1,3 +1,3 @@
-$Esa-Tracker
+Esa-Tracker
 =============
 
