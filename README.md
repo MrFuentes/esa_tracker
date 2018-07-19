@@ -1,7 +1,7 @@
 # Esa-Tracker
 Site used to monitor data from ,and send requests to, the sensor buoy
 
-HexToFloat(*class*)
+HexToFloat (*class*)
 -------------------
 
 Converts hex data into floating point number
