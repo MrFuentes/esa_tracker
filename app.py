@@ -3,26 +3,41 @@ import cgi, time, datetime, requests
 
 app = Flask(__name__)
 
-#converts hex data into floating point number
-def hex_to_float(hex):
-    #re-organises data to have little endian first
+def HexToFloat(hex):
+    """
+    HexToFloat
+    ============
+
+    Converts hex data into floating point number
+
+    Parameters
+    ----------
+    hex : str
+        A section of the string of hex data recieved from the rockblock servers as specified by ParseFromHex()
+
+    Returns
+    -------
+        A floating point number converted to decimal
+
+    """
+    #Re-organises data to have little endian first
     little_endian = str(hex[6:] + hex[4:6] + hex[2:4] + hex[0:2])
-    #converts the hex to a binary string
+    #Converts the hex to a binary string
     binary = [bin(int(x, 16))[2:].zfill(4) for x in little_endian]
     binary_str = ''.join(binary)
-    #first bit of the string dictates the sign of the floating point number
+    #First bit of the string dictates the sign of the floating point number
     sign_bit = binary_str[0]
     if sign_bit == "1":
         sign = -1
     else:
         sign = 1
-    #the next 8 bits are the mantissa
+        #Next 8 bits are the exponent
     exponent = 2 ** (int(binary_str[1:9], 2) - 127)
-    #the remaining bits are the mantissa
+    #Remaining bits are the mantissa
     mantissa = binary_str[9:]
+    #converts the mantissa from a binary float to a decimal float
     i = -1
     pos = []
-    #converts the mantissa from a binary float to a decimal float
     for x in mantissa:
         if x == "1":
             pos.append(i)
@@ -33,8 +48,23 @@ def hex_to_float(hex):
     #returns converted floating point number
     return(sign * exponent * sum)
 
-#checks and generates crc on send and recieved data
 class crc8:
+    """
+    Crc8
+    ====
+
+    Generates a CRC value of the string being passed into it
+
+    Parameters
+    ----------
+    msg : str
+        A string of hex data, either generated locally, or on the module
+
+    Returns
+    -------
+        Crc value as a hex integer
+
+    """
     def __init__(self):
         self.crcTable = ( 0x00, 0x07, 0x0E, 0x09, 0x1C, 0x1B, 0x12, 0x15, 0x38, 0x3F, 0x36, 0x31, 0x24,
         0x23, 0x2A, 0x2D, 0x70, 0x77, 0x7E, 0x79, 0x6C, 0x6B, 0x62, 0x65, 0x48, 0x4F, 0x46, 0x41, 0x54,
@@ -62,9 +92,23 @@ class crc8:
             runningCRC = self.crcTable[z]
         return hex(runningCRC)[2:]
 
-#Parses recieved data into readable form
 class ParseFromHex(object):
+    """
+    ParseFromHex
+    ============
 
+    Parses the data recieved from the module and converts it into a readable form
+
+    parameters
+    ----------
+    data : str
+        A string of hex data from the module
+
+    Returns
+    -------
+        Readable form of the revieved data
+
+    """
     def __init__(self, data):
         lat = data[38:46]
         long = data[46:54]
@@ -80,8 +124,8 @@ class ParseFromHex(object):
         self.TimeStamp = "{:02d}:{:02d}:{:02d}:{:02d}:{:02d}:{:02d}".format(Year, Month, Day, Hour, Min, Sec)
         self.MsgType = int(data[22:24], 16)
         self.DeviceReg = bytearray.fromhex(data[24:40]).decode()
-        self.GPSLatitude = hex_to_float(data[40:48])
-        self.GPSLongitude = hex_to_float(data[48:56])
+        self.GPSLatitude = HexToFloat(data[40:48])
+        self.GPSLongitude = HexToFloat(data[48:56])
         self.GPSQuality = int(data[56:58], 16)
         self.UnstructLen = int(data[58:60], 16)
         if ((self.MsgLen-2) - 56) > 0:
@@ -100,7 +144,23 @@ class ParseFromHex(object):
 
 #generates data and and converts it to hex to be send to the rockblock servers
 class ParseToHex(object):
+    """
+    ParseToHex
+    ==========
 
+    Generates data, containing unused filler data to get the string to be at least 31 bytes in length, to send  to send to the module, requesting to have data sent back in return
+
+    Parameters
+    ----------
+    msgtype : int
+        Integer dictating whether you are requesting data or sending an acknowledgement
+    Unstructured : str
+        String to be sent to the module
+
+    Returns
+    -------
+        Hex string to be sent to module
+    """
     def __init__(self, msgtype, Unstructured=None):
         self.MsgType = "0" + str(msgtype)
         self.devReg = "4142424141424241"
@@ -133,40 +193,51 @@ class ParseToHex(object):
         self.crc = crc_8.crc(msg)
         self.Msg = crc_input + self.crc
 
-initial = ParseToHex(1, "")
-send = [initial.Msg]
+send = [ParseToHex(1, "").Msg]
 a = [None]
 
-#generates and displays the main page
 @app.route('/', methods=["GET"])
-def index():
+def Index():
+    """
+    Index
+    -----
+        Generates the main page of the site, and displays the recieved data if there is any.  It also creates a new message to send to the module
+
+    """
     global a
     global send
     send = [ParseToHex(1, "").Msg]
     if a[-1] != None:
         data = ParseFromHex(a[-1])
-        return render_template("index.html", test=data.crc_test, raw_data=a[-1], data=data)
+        return render_template("Index.html", test=data.crc_test, raw_data=a[-1], data=data)
     else:
         data = None
-        return render_template("index.html", raw_data=a[-1])
+        return render_template("Index.html", raw_data=a[-1])
 
 #sends or displays post data
 @app.route("/", methods=["POST"])
-def get_data():
-        global a
+def GetData():
+    """
+    GetData
+    --------
+        Checks where the post request is aimed towards, as indicated by the filler data, and either displays it, or sends it to the rockblock servers to be sent to the module
+
+    """
+    global a
+    global send
+    data = request.GetData()
+    data = str(data).split("=")
+    if data[-1][24:40] == "4142424141424241" and data[-1][40:58] != "000000000000000000":
+        a.append(data[-1][:-1])
+        return "ok"
+    else:
         global send
-        data = request.get_data()
-        data = str(data).split("=")
-        if data[-1][24:40] == "4142424141424241" and data[-1][40:58] != "000000000000000000":
-            a.append(data[-1][:-1])
-            return "ok"
-        else:
-            global send
-            url = "https://rockblock.rock7.com/rockblock/MT"
-            querystring = {"imei":"300234066638420","username":"aubrey@jaliko.com","password":"mak3rspac3","data":send[-1]}
-            response = requests.request("POST", url, params=querystring)
-            print(response.text)
-            return '''<h1>sending</h1><br><br>please refresh and resend twice then click <a href=http://esa-tracker.herokuapp.com/>here</a>'''
+        url = "https://rockblock.rock7.com/rockblock/MT"
+        querystring = {"imei":"300234066638420","username":"aubrey@jaliko.com","password":"mak3rspac3","data":send[-1]}
+        response = requests.request("POST", url, params=querystring)
+        print(response.text)
+        #POST data must be sent 3 times in a row
+        return '''<h1>sending</h1><br><br>please refresh and resend twice then click <a href=http://esa-tracker.herokuapp.com/>here</a>'''
 
 app.secret_key = "secret"
 
