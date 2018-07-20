@@ -1,6 +1,10 @@
 Esa-Tracker
 ===========
-Site used to monitor data from ,and send requests to, the sensor buoy
+
+This is a site to allow you to send requests to, as well as recieve and display the data sent in return from the satellite buoy, all from the same page, meaning you don't need to go to the rockblock website to send or recieve messages.
+
+  I used flask python web framework to create the site, which allowed my to use python to generate a page and get and send data to the rockblock site.
+
 
 HexToFloat(*class*)
 -------------------
